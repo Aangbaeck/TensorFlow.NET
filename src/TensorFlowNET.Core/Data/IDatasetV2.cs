@@ -57,7 +57,7 @@ namespace Tensorflow
 
         IDatasetV2 map(Func<Tensor, Tensor> map_func,
             bool use_inter_op_parallelism = true,
-            bool preserve_cardinality = false,
+            bool preserve_cardinality = true,
             bool use_legacy_function = false);
 
         IDatasetV2 map(Func<Tensor, (Tensor, Tensor), (Tensor, Tensor)> map_func,
@@ -74,5 +74,12 @@ namespace Tensorflow
         /// </summary>
         /// <returns></returns>
         IDatasetV2 apply_options();
+
+        /// <summary>
+        /// Returns the cardinality of `dataset`, if known.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        Tensor dataset_cardinality(string name = null);
     }
 }

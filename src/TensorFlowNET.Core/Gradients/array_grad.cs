@@ -85,10 +85,13 @@ namespace Tensorflow.Gradients
             var out_grads = new List<Tensor>();
             if(concat_dim is EagerTensor)
             {
-                var non_neg_concat_dim = (int)concat_dim % input_values[0].rank;
+                var dim_int = (int)concat_dim;
+                var non_neg_concat_dim = dim_int < 0 
+                    ? input_values[0].rank + dim_int 
+                    : dim_int % input_values[0].rank;
                 var sizes = input_values.Select(x => x.shape[non_neg_concat_dim]).ToArray();
                 var sizes_tensor = constant_op.constant(sizes);
-                out_grads = gen_array_ops.split_v(grad, sizes_tensor, sizes[0], non_neg_concat_dim).ToList();
+                out_grads = array_ops.split(grad, sizes_tensor, non_neg_concat_dim).ToList();
             }
             else if (constant_op.is_constant(concat_dim))
             {
@@ -293,20 +296,24 @@ namespace Tensorflow.Gradients
             var strides = op.inputs[3];
 
             var x = array_ops.shape(op.inputs[0], out_type: begin.dtype);
+            var x_static = tensor_util.constant_value(x);
+            var begin_static = tensor_util.constant_value(begin);
+            var end_static = tensor_util.constant_value(end);
+            var strides_static = tensor_util.constant_value(strides);
 
             return new Tensor[]
             {
-                gen_array_ops.strided_slice_grad(
-                    x,
-                    begin,
-                    end,
-                    strides,
+                array_ops.strided_slice_grad(
+                    x_static,
+                    begin_static,
+                    end_static,
+                    strides_static,
                     grad,
-                    begin_mask: int.Parse(op.get_attr("begin_mask").ToString()),
-                    end_mask: int.Parse(op.get_attr("end_mask").ToString()),
-                    ellipsis_mask: int.Parse(op.get_attr("ellipsis_mask").ToString()),
-                    new_axis_mask: int.Parse(op.get_attr("new_axis_mask").ToString()),
-                    shrink_axis_mask: int.Parse(op.get_attr("shrink_axis_mask").ToString())),
+                    begin_mask: op.get_attr<long>("begin_mask"),
+                    end_mask: op.get_attr<long>("end_mask"),
+                    ellipsis_mask: op.get_attr<long>("ellipsis_mask"),
+                    new_axis_mask: op.get_attr<long>("new_axis_mask"),
+                    shrink_axis_mask: op.get_attr<long>("shrink_axis_mask")),
                 null,
                 null,
                 null
@@ -331,11 +338,11 @@ namespace Tensorflow.Gradients
                     begin,
                     end,
                     strides,
-                    begin_mask: (int)op.get_attr("begin_mask"),
-                    end_mask: (int)op.get_attr("end_mask"),
-                    ellipsis_mask: (int)op.get_attr("ellipsis_mask"),
-                    new_axis_mask: (int)op.get_attr("new_axis_mask"),
-                    shrink_axis_mask: (int)op.get_attr("shrink_axis_mask"))
+                    begin_mask: op.get_attr<long>("begin_mask"),
+                    end_mask: op.get_attr<long>("end_mask"),
+                    ellipsis_mask: op.get_attr<long>("ellipsis_mask"),
+                    new_axis_mask: op.get_attr<long>("new_axis_mask"),
+                    shrink_axis_mask: op.get_attr<long>("shrink_axis_mask"))
             };
         }
 

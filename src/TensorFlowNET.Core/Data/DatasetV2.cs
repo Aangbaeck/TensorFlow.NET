@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Tensorflow.Framework.Models;
+using static Tensorflow.Binding;
 
 namespace Tensorflow
 {
@@ -96,6 +97,20 @@ namespace Tensorflow
             // (4) Apply stats aggregator options
 
             return dataset;
+        }
+
+        public Tensor dataset_cardinality(string name = null)
+        {
+            if (tf.Context.executing_eagerly())
+            {
+                var results = tf.Runner.TFE_FastPathExecute(tf.Context, tf.Context.DeviceName,
+                    "DatasetCardinality", name,
+                    null,
+                    variant_tensor);
+                return results[0];
+            }
+
+            throw new NotImplementedException("");
         }
 
         public override string ToString()

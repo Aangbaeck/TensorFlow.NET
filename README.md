@@ -16,22 +16,24 @@
 
 ### Why TensorFlow in C# and F# ?
 
-`SciSharp STACK`'s mission is to bring popular data science technology into the .NET world and to provide .NET developers with a powerful Machine Learning tool set without reinventing the wheel. Since the APIs are kept as similar as possible you can immediately adapt any existing Tensorflow code in C# or F# with a zero learning curve. Take a look at a comparison picture and see how comfortably a Tensorflow/Python script translates into a C# program with TensorFlow.NET.
+`SciSharp STACK`'s mission is to bring popular data science technology into the .NET world and to provide .NET developers with a powerful Machine Learning tool set without reinventing the wheel. Since the APIs are kept as similar as possible you can immediately adapt any existing TensorFlow code in C# or F# with a zero learning curve. Take a look at a comparison picture and see how comfortably a TensorFlow/Python script translates into a C# program with TensorFlow.NET.
 
 ![pythn vs csharp](docs/assets/syntax-comparision.png)
 
-SciSharp's philosophy allows a large number of machine learning code written in Python to be quickly migrated to .NET, enabling .NET developers to use cutting edge machine learning models and access a vast number of Tensorflow resources which would not be possible without this project.
+SciSharp's philosophy allows a large number of machine learning code written in Python to be quickly migrated to .NET, enabling .NET developers to use cutting edge machine learning models and access a vast number of TensorFlow resources which would not be possible without this project.
 
-In comparison to other projects, like for instance [TensorFlowSharp](https://www.nuget.org/packages/TensorFlowSharp/) which only provide Tensorflow's low-level C++ API and can only run models that were built using Python, Tensorflow.NET also implements Tensorflow's high level API where all the magic happens. This computation graph building layer is still under active development. Once it is completely implemented you can build new Machine Learning models in C# or F#. 
+In comparison to other projects, like for instance [TensorFlowSharp](https://www.nuget.org/packages/TensorFlowSharp/) which only provide TensorFlow's low-level C++ API and can only run models that were built using Python, Tensorflow.NET also implements TensorFlow's high level API where all the magic happens. This computation graph building layer is still under active development. Once it is completely implemented you can build new Machine Learning models in C# or F#. 
+
+Go through the online docs [TensorFlow for .NET](https://scisharp.github.io/tensorflow-net-docs) before you get started with Machine Learning in .NET.
 
 ### How to use
 
-| TensorFlow                 | tf native1.14 | tf native 1.15 | tf native 2.3 |
-| -------------------------- | ------------- | -------------- | ------------- |
-| tf.net 0.3x, tf.keras 0.2 |               |                | x             |
-| tf.net 0.2x                |               | x              | x             |
-| tf.net 0.15                | x             | x              |               |
-| tf.net 0.14                | x             |                |               |
+| TensorFlow                 | tf native1.14, cuda 10.0 | tf native 1.15, cuda 10.0 | tf native 2.3, cuda 10.1 | tf native 2.4, cuda 11 |
+| -------------------------- | ------------- | -------------- | ------------- | ------------- |
+| tf.net 0.3x, tf.keras 0.2 |               |                | x | not compatible |
+| tf.net 0.2x          |               | x | x |              |
+| tf.net 0.15          | x | x |               |               |
+| tf.net 0.14          | x |                |               |               |
 
 Troubleshooting of running example or installation, please  refer [here](tensorflowlib/README.md).
 
@@ -56,30 +58,32 @@ PM> Install-Package SciSharp.TensorFlow.Redist-Windows-GPU
 
 Import TF.NET and Keras API in your project.
 
-```cs
+```csharp
 using static Tensorflow.Binding;
 using static Tensorflow.KerasApi;
+using Tensorflow;
+using NumSharp;
 ```
 
 Linear Regression in `Eager` mode:
 
-```c#
+```csharp
 // Parameters        
 var training_steps = 1000;
 var learning_rate = 0.01f;
 var display_step = 100;
 
 // Sample data
-var train_X = np.array(3.3f, 4.4f, 5.5f, 6.71f, 6.93f, 4.168f, 9.779f, 6.182f, 7.59f, 2.167f,
+var X = np.array(3.3f, 4.4f, 5.5f, 6.71f, 6.93f, 4.168f, 9.779f, 6.182f, 7.59f, 2.167f,
              7.042f, 10.791f, 5.313f, 7.997f, 5.654f, 9.27f, 3.1f);
-var train_Y = np.array(1.7f, 2.76f, 2.09f, 3.19f, 1.694f, 1.573f, 3.366f, 2.596f, 2.53f, 1.221f,
+var Y = np.array(1.7f, 2.76f, 2.09f, 3.19f, 1.694f, 1.573f, 3.366f, 2.596f, 2.53f, 1.221f,
              2.827f, 3.465f, 1.65f, 2.904f, 2.42f, 2.94f, 1.3f);
-var n_samples = train_X.shape[0];
+var n_samples = X.shape[0];
 
 // We can set a fixed init value in order to demo
 var W = tf.Variable(-0.06f, name: "weight");
 var b = tf.Variable(-0.73f, name: "bias");
-var optimizer = tf.optimizers.SGD(learning_rate);
+var optimizer = keras.optimizers.SGD(learning_rate);
 
 // Run training for the given number of steps.
 foreach (var step in range(1, training_steps + 1))
@@ -208,7 +212,7 @@ for step = 1 to  (training_steps + 1) do
         printfn $"step: {step}, loss: {loss.numpy()}, W: {W.numpy()}, b: {b.numpy()}"
 ```
 
-Read the docs & book [The Definitive Guide to Tensorflow.NET](https://tensorflownet.readthedocs.io/en/latest/FrontCover.html) if you want to know more about TensorFlow for .NET under the hood.
+Read the book [The Definitive Guide to Tensorflow.NET](https://tensorflownet.readthedocs.io/en/latest/FrontCover.html) if you want to know more about TensorFlow for .NET under the hood.
 
 ### Contribute:
 

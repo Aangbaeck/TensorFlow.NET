@@ -9,12 +9,9 @@ namespace Tensorflow.Keras.Losses
     public class MeanSquaredError : LossFunctionWrapper, ILossFunc
     {
         public MeanSquaredError(
-            string reduction = ReductionV2.AUTO,
-            string name = "mean_squared_error") :
-            base(reduction: reduction, 
-                name: name)
-        {
-        }
+            string reduction = null,
+            string name = null) :
+            base(reduction: reduction, name: name==null? "mean_squared_error" : name){ }
 
         public override Tensor Apply(Tensor y_true = null, Tensor y_pred =null, bool from_logits = false, int axis = -1)
         {

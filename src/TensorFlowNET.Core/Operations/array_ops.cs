@@ -122,7 +122,7 @@ namespace Tensorflow
                         case TF_DataType.TF_FLOAT:
                             return _constant_if_small(0.0F, shape, dtype, name);
                         case TF_DataType.TF_INT64:
-                            return _constant_if_small(0l, shape, dtype, name);
+                            return _constant_if_small(0L, shape, dtype, name);
                         case TF_DataType.TF_INT32:
                             return _constant_if_small(0, shape, dtype, name);
                         case TF_DataType.TF_INT8:
@@ -506,6 +506,27 @@ namespace Tensorflow
             }
         }
 
+
+        public static Tensor where_v2(Tensor condition, object x = null, object y = null, string name = null)
+        {
+            if (x == null && y == null)
+            {
+                return tf_with(ops.name_scope(name, "Where", new { condition }), scope =>
+                {
+                    name = scope;
+                    condition = ops.convert_to_tensor(condition, preferred_dtype: dtypes.@bool, name: "condition");
+                    return gen_array_ops.where(condition: condition, name: name);
+                });
+            }
+            else if (x != null && y != null)
+            {
+                return gen_array_ops.select_v2(condition, x, y, name);
+            }
+            else
+            {
+                throw new ValueError("x and y must both be non-None or both be None.");
+            }
+        }
         /// <summary>
         /// Returns the shape of a tensor.
         /// </summary>
@@ -649,6 +670,68 @@ namespace Tensorflow
 
             return op;
         }
+
+        /// <summary>
+        /// Returns the gradient of `StridedSlice`.
+        /// 
+        /// Since `StridedSlice` cuts out pieces of its `input` which is size
+        /// `shape`, its gradient will have the same shape (which is passed here
+        /// as `shape`). The gradient will be zero in any element that the slice
+        /// does not select.
+        /// </summary>
+        /// <param name="shape">Must be one of the following types: `int32`, `int64`.</param>
+        /// <param name="begin">Must have the same type as `shape`.</param>
+        /// <param name="end">Must have the same type as `shape`.</param>
+        /// <param name="strides">Must have the same type as `shape`.</param>
+        /// <param name="dy">A `Tensor`.</param>
+        /// <param name="begin_mask">An optional `int`. Defaults to `0`.</param>
+        /// <param name="end_mask">An optional `int`. Defaults to `0`.</param>
+        /// <param name="ellipsis_mask">An optional `int`. Defaults to `0`.</param>
+        /// <param name="new_axis_mask">An optional `int`. Defaults to `0`.</param>
+        /// <param name="shrink_axis_mask">An optional `int`. Defaults to `0`.</param>
+        /// <param name="name">A name for the operation (optional).</param>
+        /// <returns>A `Tensor`. Has the same type as `dy`.</returns>
+        public static Tensor strided_slice_grad(Tensor shape, Tensor begin, Tensor end, Tensor strides, Tensor dy,
+            long begin_mask = 0, long end_mask = 0, long ellipsis_mask = 0, long new_axis_mask = 0,
+            long shrink_axis_mask = 0, string name = null)
+            => tf.Context.RunInAutoMode2(
+                () => tf.OpDefLib._apply_op_helper("StridedSliceGrad", name, new
+                {
+                    shape,
+                    begin,
+                    end,
+                    strides,
+                    dy,
+                    begin_mask,
+                    end_mask,
+                    ellipsis_mask,
+                    new_axis_mask,
+                    shrink_axis_mask
+                }).output,
+                () => tf.Runner.TFE_FastPathExecute(tf.Context, tf.Context.DeviceName,
+                    "StridedSliceGrad", name,
+                    null,
+                    shape, begin, end, strides, dy,
+                    "begin_mask", begin_mask,
+                    "end_mask", end_mask,
+                    "ellipsis_mask", ellipsis_mask,
+                    "new_axis_mask", new_axis_mask,
+                    "shrink_axis_mask", shrink_axis_mask).FirstOrDefault(),
+                (op) =>
+                {
+                    var attrs = new object[]
+                    {
+                        "T", op.get_attr<TF_DataType>("T"),
+                        "Index", op.get_attr<TF_DataType>("Index"),
+                        "begin_mask", op.get_attr<long>("begin_mask"),
+                        "end_mask", op.get_attr<long>("end_mask"),
+                        "ellipsis_mask", op.get_attr<long>("ellipsis_mask"),
+                        "new_axis_mask", op.get_attr<long>("new_axis_mask"),
+                        "shrink_axis_mask", op.get_attr<long>("shrink_axis_mask")
+                    };
+                    tf.Runner.RecordGradient("StridedSliceGrad", op.inputs, attrs, op.outputs);
+                },
+                new Tensors(shape, begin, end, strides, dy));
 
         /// <summary>
         /// Removes dimensions of size 1 from the shape of a tensor.
@@ -800,6 +883,15 @@ namespace Tensorflow
             {
                 return gen_array_ops.transpose(a, perm, name: scope);
             });
+        }
+
+        public static Tensor[] split(Tensor value, Tensor size_splits, int axis, int num = -1,
+            string name = "split")
+        {
+            if (num == -1)
+                num = size_splits.shape[0];
+
+            return gen_array_ops.split_v(value, size_splits, axis, num, name: name);
         }
 
         public static Tensor[] split<T>(Tensor value, int num_split, T axis,
